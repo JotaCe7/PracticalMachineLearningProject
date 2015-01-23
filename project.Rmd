@@ -7,7 +7,7 @@ output: html_document
 
 This is the solution of the Course Project from "Practical Machine Learning" course from Coursera.
 
-The training and test data are obtained from <ttps://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv> and <https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv> respectively.
+The training and test data are obtained from <https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv> and <https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv> respectively.
 
 First, we'll look for the variables we have in the test set, because our predictions will only be made using them.
 These are:
@@ -73,8 +73,8 @@ Let's see:
 pca <- prcomp(new_sub_training[,-length(new_sub_training)])
 summary(pca)
 ```
-We see that with only 14 principal components we almost encapture 100% of the information.
-Let's run the preProcess function in the caret package and set the number of pc to use to 14 (pcaComp=14); and get the new rotated training and test set.
+We see that with only 6 principal components we almost encapture 90% of the information.
+Let's run the preProcess function in the caret package and set the number of pc to use to 6 (pcaComp=6); and get the new rotated training and test set.
 ```{r}
 preProc <- preProcess(new_sub_training[,-length(new_sub_training)],method="pca",pcaComp=6)
 sub_training_pca <- predict(preProc,new_sub_training[,-length(new_sub_training)])
@@ -85,7 +85,7 @@ Now it's time to fit the model using the 'random forest' method, since it is a c
 set.seed(519)
 modFit <- train(classe~.,data=sub_training_pca,method="rf")
 ```
-The Out of sample error for this model is as stated in modFit$finalModel 3.68%
+The Out of sample error (OOB) for this model is as stated in modFit$finalModel:
 ```{r}
 modFit$finalModel
 ```

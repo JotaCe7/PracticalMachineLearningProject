@@ -20,10 +20,10 @@ new_sub_testing  <- new_training[-inTrain,]
 
 M <- abs(cor(new_sub_training[,-length(new_sub_training)]))
 diag(M) <- 0
-#which(M>0.9,arr.ind=T)
+which(M>0.9,arr.ind=T)
 
 pca <- prcomp(new_sub_training[,-length(new_sub_training)])
-preProc <- preProcess(new_sub_training[,-length(new_sub_training)],method="pca",pcaComp=14)
+preProc <- preProcess(new_sub_training[,-length(new_sub_training)],method="pca",pcaComp=6)
 
 
 sub_training_pca <- predict(preProc,new_sub_training[,-length(new_sub_training)])
