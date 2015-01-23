@@ -68,7 +68,7 @@ img {
 
 
 <p>This is the solution of the Course Project from “Practical Machine Learning” course from Coursera.</p>
-<p>The training and test data are obtained from <ttps: d396qusza40orc.cloudfront.net predmachlearn pml-training.csv> and <a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv</a> respectively.</p>
+<p>The training and test data are obtained from <a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv</a> and <a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv</a> respectively.</p>
 <p>First, we’ll look for the variables we have in the test set, because our predictions will only be made using them. These are:</p>
 <pre><code>## Loading required package: lattice
 ## Loading required package: ggplot2</code></pre>
@@ -182,7 +182,7 @@ summary(pca)</code></pre>
 ## Standard deviation     0.1847 0.1026 0.03646
 ## Proportion of Variance 0.0000 0.0000 0.00000
 ## Cumulative Proportion  1.0000 1.0000 1.00000</code></pre>
-<p>We see that with only 14 principal components we almost encapture 100% of the information. Let’s run the preProcess function in the caret package and set the number of pc to use to 14 (pcaComp=14); and get the new rotated training and test set.</p>
+<p>We see that with only 6 principal components we almost encapture 90% of the information. Let’s run the preProcess function in the caret package and set the number of pc to use to 6 (pcaComp=6); and get the new rotated training and test set.</p>
 <pre class="r"><code>preProc &lt;- preProcess(new_sub_training[,-length(new_sub_training)],method=&quot;pca&quot;,pcaComp=6)
 sub_training_pca &lt;- predict(preProc,new_sub_training[,-length(new_sub_training)])
 sub_training_pca$classe &lt;- new_sub_training$classe</code></pre>
@@ -192,7 +192,7 @@ modFit &lt;- train(classe~.,data=sub_training_pca,method=&quot;rf&quot;)</code><
 <pre><code>## Loading required package: randomForest
 ## randomForest 4.6-10
 ## Type rfNews() to see new features/changes/bug fixes.</code></pre>
-<p>The Out of sample error for this model is as stated in modFit$finalModel 3.68%</p>
+<p>The Out of sample error (OOB) for this model is as stated in modFit$finalModel:</p>
 <pre class="r"><code>modFit$finalModel</code></pre>
 <pre><code>## 
 ## Call:
