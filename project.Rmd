@@ -1,0 +1,113 @@
+---
+title: "Human Activity Qualitative Recognition"
+author: "Jose Cisneros"
+date: "Wednesday, January 21, 2015"
+output: html_document
+---
+
+This is the solution of the Course Project from "Practical Machine Learning" course from Coursera.
+
+The training and test data are obtained from <ttps://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv> and <https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv> respectively.
+
+First, we'll look for the variables we have in the test set, because our predictions will only be made using them.
+These are:
+
+```` {r, echo = FALSE}
+library(caret)
+training = read.csv("training.csv",stringsAsFactors=TRUE)
+testing = read.csv("testing.csv")
+no.na_names <- names(testing[,!sapply(testing,function(x) all(is.na(x)))])
+````
+
+```` {r}
+names(testing[,!sapply(testing,function(x) all(is.na(x)))])
+````
+
+```` {r, echo = FALSE}
+new_training <-  training[ ,c(no.na_names[-length(no.na_names)] ,"classe")]
+new_testing <-  testing[ ,no.na_names[-length(no.na_names) ] ]
+````
+
+Now we see that we have 59 variables we can use to train our training set. But this is still a big number... So let's have a look to what we have here:
+
+```{r}
+# head(new_training)
+# summary(new_training)
+```
+
+It seems that we can prescind from time X, time and windown variables. Furthermore we can inspect if are there highly correlated variable, in which case it would be recommended to compute a Principal Components Analysis
+
+```{r}
+#Drop out time and window variables in training and test set
+new_training <- new_training[,c(-1,-3,-4,-5,-6,-7)]
+new_testing  <- new_testing[,c(-1,-3,-4,-5,-6,-7)]
+```
+```{r, echo=FALSE}
+#Change factor column "user_name" to a numeric column in training and test set
+levels(new_training[,1]) = c(1,2,3,4,5,6)
+levels(new_testing[,1]) = c(1,2,3,4,5,6)
+new_training[1] <- as.numeric(as.character(new_training[,1]))
+new_testing[1] <- as.numeric(as.character(new_testing[,1]))
+```
+
+Before performing the PC Analisys, let's divide the training set into a new training and test set, so we can then validate our model and stimate the expected error
+
+```{r}
+set.seed(915)
+inTrain <- createDataPartition(new_training$classe,p=0.7,list=FALSE)
+new_sub_training <- new_training[inTrain,]
+new_sub_testing  <- new_training[-inTrain,]
+```
+
+Now we calculate the correlation matrix, set its diagonal to 0 and search for values greater than 0.85
+
+```{r}
+M <- abs(cor(new_sub_training[,-length(new_sub_training)]))
+diag(M) <- 0
+which(M>0.85,arr.ind=T)
+```
+
+We see a considerable amount of highly correlated variables, so with a preprocess of pca we could reduce the amount of variables needed to encapture most of the data behaviour.
+Let's see:
+```{r}
+pca <- prcomp(new_sub_training[,-length(new_sub_training)])
+summary(pca)
+```
+We see that with only 14 principal components we almost encapture 100% of the information.
+Let's run the preProcess function in the caret package and set the number of pc to use to 14 (pcaComp=14); and get the new rotated training and test set.
+```{r}
+preProc <- preProcess(new_sub_training[,-length(new_sub_training)],method="pca",pcaComp=6)
+sub_training_pca <- predict(preProc,new_sub_training[,-length(new_sub_training)])
+sub_training_pca$classe <- new_sub_training$classe
+```
+Now it's time to fit the model using the 'random forest' method, since it is a classification problem with a considerable amount of variables (numeric and non-numeric).
+```{r}
+set.seed(519)
+modFit <- train(classe~.,data=sub_training_pca,method="rf")
+```
+The Out of sample error for this model is as stated in modFit$finalModel 3.68%
+```{r}
+modFit$finalModel
+```
+To validate this, will use the completely unseen data (new_sub_testing)
+```{r}
+sub_testing_pca  <- predict(preProc,new_sub_testing[,-length(new_sub_testing)])
+sub_testing_pca$classe <- new_sub_testing$classe
+
+prediction_sub_testing_pca <- predict(modFit,sub_testing_pca)
+cm <- confusionMatrix(sub_testing_pca$classe, prediction_sub_testing_pca)
+#Accuracy
+acc <- cm$overall[1]
+acc
+#Error: (1-Accuracy)
+error.rate <- 1- acc
+names(error.rate) <- c("err.rate")
+error.rate
+```
+Prediction of the outcomes in the test set.
+```{r}
+testing_pca <- predict(preProc,new_testing)
+prediction <- predict(modFit,testing_pca)
+prediction
+```
+
